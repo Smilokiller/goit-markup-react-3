@@ -6,11 +6,25 @@ import { v4 as uuidv4 } from "uuid";
 
 export class TelBook extends Component {
   state = {
-    contacts: JSON.parse(localStorage.getItem("contacts")),
+    contacts: [],
     filter: "",
     name: "",
     number: "",
   };
+
+  componentDidUpdate(prevProps, prevState) {
+    if (this.state.contacts !== prevState.contacts) {
+      localStorage.setItem("contacts", JSON.stringify(this.state.contacts));
+    }
+  }
+
+  componentDidMount() {
+    const dataFromStorage = localStorage.getItem("contacts");
+    const contacts = JSON.parse(dataFromStorage);
+    if (contacts) {
+      this.setState({ contacts: contacts });
+    }
+  }
 
   handleChange = ({ target }) => {
     const { name, value } = target;
@@ -19,42 +33,20 @@ export class TelBook extends Component {
 
   handleSubmit = (evt) => {
     evt.preventDefault();
-    if (this.state.contacts !== null) {
-      const lookingFor = this.state.contacts.find(
-        (el) => el.name === this.state.name
-      );
-      if (lookingFor) {
-        alert("This user already in contact list");
-        this.setState({ name: "", number: "" });
-      } else {
-        localStorage.setItem(
-          "contacts",
-          JSON.stringify([
-            ...this.state.contacts,
-            { id: uuidv4(), name: this.state.name, number: this.state.number },
-          ])
-        );
-
-        this.setState({
-          contacts: JSON.parse(localStorage.getItem("contacts")),
-        });
-
-        this.setState({ name: "", number: "" });
-      }
+    const lookingFor = this.state.contacts.find(
+      (el) => el.name === this.state.name
+    );
+    if (lookingFor) {
+      alert("This user already in contact list");
+      this.setState({ name: "", number: "" });
     } else {
       this.setState({
-        contacts: [],
-      });
-      localStorage.setItem(
-        "contacts",
-        JSON.stringify([
+        contacts: [
           ...this.state.contacts,
           { id: uuidv4(), name: this.state.name, number: this.state.number },
-        ])
-      );
-      this.setState({
-        contacts: JSON.parse(localStorage.getItem("contacts")),
+        ],
       });
+      this.setState({ name: "", number: "" });
     }
   };
 
@@ -64,14 +56,15 @@ export class TelBook extends Component {
   };
 
   handleDelete = (id) => {
+    console.log(id);
     this.setState((prevState) => ({
       contacts: prevState.contacts.filter((el) => el.id !== id),
     }));
+    console.log();
   };
 
   render() {
     const filterarr = this.state.contacts.filter((el) => {
-      localStorage.setItem("contacts", JSON.stringify(this.state.contacts));
       const name = el.name.toLowerCase();
       const filterName = this.state.filter.toLowerCase();
       if (name.includes(filterName)) {
